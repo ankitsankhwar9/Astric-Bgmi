@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BATTLESTATS // BGMI Stat Visualizer & Esports Dossier</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Teko:wght@500;700&family=Rajdhani:wght@600;700&family=Inter:wght@400;600;800&display=swap');
+    .font-teko { font-family: 'Teko', sans-serif; }
+    .font-rajdhani { font-family: 'Rajdhani', sans-serif; }
+    .scan-line {
+      background: linear-gradient(to bottom, transparent 50%, rgba(245, 158, 11, 0.25) 51%);
+      background-size: 100% 4px;
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans min-h-screen selection:bg-amber-500 selection:text-black">
+  <nav class="border-b border-zinc-800 bg-zinc-900/90 backdrop-blur sticky top-0 z-40 px-6 py-4 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 bg-amber-500 rounded flex items-center justify-center font-teko text-2xl font-black text-black">BS</div>
+      <span class="font-teko text-3xl tracking-wider text-white">BATTLE<span class="text-amber-500">STATS</span></span>
+      <span class="text-[10px] uppercase tracking-widest bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded border border-zinc-700">BGMI Esports Engine</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <button onclick="openOcrModal()" class="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black text-sm font-bold uppercase tracking-wider px-4 py-2 rounded transition shadow-lg shadow-amber-500/20">
+        <i class="fa-solid fa-camera"></i> Scan Screenshot
+      </button>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto p-6 space-y-8">
+    <!-- Player Header -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
+      <div class="flex items-center gap-6">
+        <div class="relative">
+          <div class="w-24 h-24 bg-gradient-to-tr from-amber-600 to-amber-400 rounded-lg flex items-center justify-center text-4xl font-teko font-black text-black border-2 border-amber-500 shadow-xl">
+            TX
+          </div>
+          <span class="absolute -bottom-2 -right-2 bg-zinc-900 border border-amber-500 text-amber-400 text-xs font-bold px-2 py-0.5 rounded">ACE</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 id="ignDisplay" class="text-3xl font-rajdhani font-bold tracking-wide">TX丨SOUL_VIPER</h1>
+            <i class="fa-solid fa-circle-check text-cyan-400" title="Verified Esports Profile"></i>
+          </div>
+          <p class="text-sm text-zinc-400 font-mono">UID: <span id="uidDisplay" class="text-zinc-200">5120938471</span> • Tier: <span class="text-amber-400 font-semibold">Ace Dominator</span></p>
+          <div class="flex gap-2 mt-2">
+            <span class="bg-zinc-800 text-zinc-300 text-xs px-2.5 py-1 rounded border border-zinc-700 font-semibold">Assaulter</span>
+            <span class="bg-zinc-800 text-zinc-300 text-xs px-2.5 py-1 rounded border border-zinc-700 font-semibold">Team X</span>
+            <span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs px-2.5 py-1 rounded font-semibold">T3 Verified</span>
+          </div>
+        </div>
+      </div>
+      <div class="text-right flex flex-col items-center md:items-end">
+        <span class="text-xs uppercase tracking-widest text-zinc-400 font-bold">Combat Power (ECP)</span>
+        <span id="ecpDisplay" class="font-teko text-6xl text-amber-500 leading-none">884<span class="text-2xl text-zinc-500">/1000</span></span>
+        <span class="text-xs text-cyan-400 font-semibold">Rank #14 State Bracket</span>
+      </div>
+    </div>
+
+    <!-- Stats & Radar Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 lg:col-span-1 flex flex-col items-center">
+        <h3 class="font-teko text-2xl text-zinc-300 tracking-wide mb-2 uppercase">5-Axis Tactical Balance</h3>
+        <div class="w-full h-64 flex items-center justify-center">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </div>
+
+      <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div class="bg-zinc-950 p-4 rounded-lg border border-zinc-800">
+          <span class="text-xs uppercase tracking-wider text-zinc-400">F/D Ratio</span>
+          <p id="fdDisplay" class="font-teko text-4xl text-amber-400">5.82</p>
+          <span class="text-[11px] text-zinc-500">Top 1.5% in Squad</span>
+        </div>
+        <div class="bg-zinc-950 p-4 rounded-lg border border-zinc-800">
+          <span class="text-xs uppercase tracking-wider text-zinc-400">Avg Damage</span>
+          <p id="damageDisplay" class="font-teko text-4xl text-white">846.5</p>
+          <span class="text-[11px] text-zinc-500">Damage per match</span>
+        </div>
+        <div class="bg-zinc-950 p-4 rounded-lg border border-zinc-800">
+          <span class="text-xs uppercase tracking-wider text-zinc-400">Headshot %</span>
+          <p id="hsDisplay" class="font-teko text-4xl text-white">24.2%</p>
+          <span class="text-[11px] text-zinc-500">Precision Grade: S</span>
+        </div>
+        <div class="bg-zinc-950 p-4 rounded-lg border border-zinc-800">
+          <span class="text-xs uppercase tracking-wider text-zinc-400">Matches Played</span>
+          <p id="matchesDisplay" class="font-teko text-4xl text-white">184</p>
+          <span class="text-[11px] text-zinc-500">Season C6S18</span>
+        </div>
+        <div class="bg-zinc-950 p-4 rounded-lg border border-zinc-800">
+          <span class="text-xs uppercase tracking-wider text-zinc-400">Top 10 Rate</span>
+          <p id="top10Display" class="font-teko text-4xl text-cyan-400">68.4%</p>
+          <span class="text-[11px] text-zinc-500">Survival Specialist</span>
+        </div>
+        <div class="bg-zinc-950 p-4 rounded-lg border border-zinc-800">
+          <span class="text-xs uppercase tracking-wider text-zinc-400">Total Finishes</span>
+          <p id="killsDisplay" class="font-teko text-4xl text-white">1,071</p>
+          <span class="text-[11px] text-zinc-500">Confirmed Frags</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flex Card Generation -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center">
+      <h3 class="font-teko text-3xl uppercase tracking-wider text-amber-500 mb-2">Generate Instagram Flex Card</h3>
+      <p class="text-sm text-zinc-400 max-w-lg mx-auto mb-6">Create a verified 9:16 mobile card ready to post directly to your Instagram Story or WhatsApp Status.</p>
+      
+      <div class="flex justify-center mb-6">
+        <div id="flexCard" class="w-80 h-[480px] bg-gradient-to-b from-zinc-900 via-zinc-950 to-black p-6 rounded-2xl border-2 border-amber-500/50 shadow-2xl relative flex flex-col justify-between text-left">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">BATTLESTATS CERTIFIED</span>
+              <h4 class="font-rajdhani text-2xl font-bold tracking-wide">TX丨SOUL_VIPER</h4>
+              <span class="text-xs text-zinc-400 font-mono">UID: 5120938471</span>
+            </div>
+            <div class="bg-amber-500 text-black font-teko text-xl font-bold px-2 py-0.5 rounded">ACE DOM</div>
+          </div>
+          
+          <div class="space-y-3 my-auto">
+            <div class="flex justify-between border-b border-zinc-800 pb-1">
+              <span class="text-xs text-zinc-400 uppercase">F/D Ratio</span>
+              <span class="font-teko text-2xl text-amber-400 leading-none">5.82</span>
+            </div>
+            <div class="flex justify-between border-b border-zinc-800 pb-1">
+              <span class="text-xs text-zinc-400 uppercase">Avg Damage</span>
+              <span class="font-teko text-2xl text-white leading-none">846.5</span>
+            </div>
+            <div class="flex justify-between border-b border-zinc-800 pb-1">
+              <span class="text-xs text-zinc-400 uppercase">Headshot %</span>
+              <span class="font-teko text-2xl text-white leading-none">24.2%</span>
+            </div>
+            <div class="flex justify-between border-b border-zinc-800 pb-1">
+              <span class="text-xs text-zinc-400 uppercase">Combat Power</span>
+              <span class="font-teko text-2xl text-cyan-400 leading-none">884</span>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-zinc-800 flex justify-between items-center text-[10px] text-zinc-500 uppercase tracking-widest font-mono">
+            <span>Scan to Verify</span>
+            <span class="text-amber-500">battlestats.gg</span>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="downloadFlexCard()" class="bg-amber-500 hover:bg-amber-400 text-black font-bold uppercase tracking-wider px-6 py-2.5 rounded-lg transition shadow-lg shadow-amber-500/20">
+        <i class="fa-solid fa-download mr-2"></i> Download Flex Card (PNG)
+      </button>
+    </div>
+  </main>
+
+  <!-- OCR Scanner Modal -->
+  <div id="ocrModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 max-w-md w-full rounded-2xl p-6 text-center">
+      <h3 class="font-teko text-3xl uppercase tracking-wider text-amber-500 mb-2">Screenshot OCR Scanner</h3>
+      <p class="text-xs text-zinc-400 mb-6">Upload your BGMI Profile or Career Results screenshot to extract stats automatically.</p>
+      
+      <div class="border-2 border-dashed border-zinc-700 hover:border-amber-500 rounded-xl p-8 cursor-pointer transition mb-6 bg-zinc-950">
+        <i class="fa-solid fa-cloud-arrow-up text-3xl text-zinc-500 mb-2"></i>
+        <p class="text-sm font-semibold text-zinc-300">Tap to upload BGMI Screenshot</p>
+        <span class="text-[11px] text-zinc-500">PNG, JPG up to 10MB</span>
+      </div>
+
+      <div class="flex gap-3">
+        <button onclick="closeOcrModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-2 rounded-lg text-sm">Cancel</button>
+        <button onclick="simulateScan()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-black font-bold py-2 rounded-lg text-sm">Extract Stats</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Radar Chart Initialization
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    const radarChart = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: ['Firepower', 'Impact', 'Precision', 'Survival', 'Consistency'],
+        datasets: [{
+          label: 'Player Rating',
+          data: [83, 85, 80, 68, 88],
+          backgroundColor: 'rgba(245, 158, 11, 0.25)',
+          borderColor: '#f59e0b',
+          pointBackgroundColor: '#f59e0b',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: '#f59e0b'
+        }]
+      },
+      options: {
+        scales: {
+          r: {
+            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+            pointLabels: { color: '#a1a1aa', font: { size: 11, family: 'Rajdhani' } },
+            ticks: { display: false, maxTicksLimit: 5 }
+          }
+        },
+        plugins: { legend: { display: false } },
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+
+    function openOcrModal() { document.getElementById('ocrModal').classList.remove('hidden'); }
+    function closeOcrModal() { document.getElementById('ocrModal').classList.add('hidden'); }
+
+    function simulateScan() {
+      closeOcrModal();
+      alert("Screenshot parsed successfully! Dossier updated.");
+    }
+
+    function downloadFlexCard() {
+      const card = document.getElementById('flexCard');
+      html2canvas(card, { scale: 2 }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'battlestats-flex.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+  </script>
+</body>
+</html>
